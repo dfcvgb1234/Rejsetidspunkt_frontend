@@ -1,0 +1,43 @@
+﻿@page "/profilesettings/{action}"
+@using Rejsetidspunkt.Services.ProfileServices;
+
+@inject NavigationManager NavManager
+
+<div class="login-content">
+    <label>Username</label>
+    <input @bind-value="username" />
+    <label>Password</label>
+    <input @bind-value="password" type="password"/>
+    <button @onclick="Login" id="login-button">Login</button>
+    <button @onclick="CreateAccount" id="login-button">Create account</button>
+</div>
+
+
+@code {
+
+    [Parameter]
+    public string action { get; set; }
+
+    string username;
+    string password;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (action == "logout")
+        {
+            await LoginService.Logout();
+            NavManager.NavigateTo("/profile");
+        }
+    }
+
+    private async Task Login()
+    {
+        await LoginService.Login(username, password);
+        NavManager.NavigateTo("/profile");
+    }
+
+    private void CreateAccount()
+    {
+        NavManager.NavigateTo("/profilecreate");
+    }
+}

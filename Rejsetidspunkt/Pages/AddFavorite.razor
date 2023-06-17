@@ -1,0 +1,114 @@
+﻿@page "/addfavorite"
+@using Rejsetidspunkt.Models;
+@using Rejsetidspunkt.Services;
+@using Rejsetidspunkt.Services.ProfileServices;
+
+@inject IJSRuntime JS
+@inject NavigationManager NavManager
+
+<div class="login-content">
+    <label>Select station</label>
+    <select id="station-select" @onclick=GetAllLines @onchange=GetAllLines>
+        @foreach (StationModel station in stations)
+        {
+            <option value="@station.Id">@station.Name</option>
+        }
+    </select>
+    <label>Select line</label>
+    <select id="line-select" @onclick=GetAllDirections @onchange=GetAllDirections>
+    </select>
+    <label>Select direction</label>
+    <select id="direction-select">
+    </select>
+    <button id="login-button" @onclick=GoBack>Go back</button>
+    <button id="login-button" @onclick=AddNewFavorite>Add favorite</button>
+</div>
+
+@code {
+
+    List<StationModel> stations = new List<StationModel>();
+
+    string selectedStation;
+    string selectedLine;
+    string selectedDirection;
+
+    private List<DepartureWrapper> departures = new List<DepartureWrapper>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await Task.Run(async () =>
+        {
+            stations = STrainStationService.Load().Stations;
+        });
+
+    }
+
+    private async Task GetAllLines()
+    {
+        JS.InvokeVoidAsync("clearSelect", "line-select");
+        selectedStation = await JS.InvokeAsync<string>("getSelectValue", "station-select");
+        departures = await new RejseplanenTimetableService().GetAllDeparturesFromStationId(selectedStation);
+
+        List<string> lines = new List<string>();
+        foreach (DepartureWrapper dep in departures)
+        {
+            if (dep.Type == "S")
+            {
+                if (!lines.Contains(dep.Line))
+                {
+                    lines.Add(dep.Line);
+                }
+            }
+        }
+
+        foreach (string line in lines)
+        {
+            JS.InvokeVoidAsync("addOptionToSelect", "line-select", line, line);
+        }
+    }
+
+    private async Task GetAllDirections()
+    {
+        JS.InvokeVoidAsync("clearSelect", "direction-select");
+        selectedLine = await JS.InvokeAsync<string>("getSelectValue", "line-select");
+        List<string> directions = new List<string>();
+        foreach (DepartureWrapper dep in departures)
+        {
+            if (dep.Type == "S")
+            {
+                if (dep.Line == selectedLine)
+                {
+                    if (!directions.Contains(dep.Direction))
+                    {
+                        directions.Add(dep.Direction);
+                    }
+                }
+            }
+        }
+
+        foreach (string direction in directions)
+        {
+            JS.InvokeVoidAsync("addOptionToSelect", "direction-select", direction, direction);
+        }
+    }
+
+    private void GoBack()
+    {
+        NavManager.NavigateTo("/favorites");
+    }
+
+    private async Task AddNewFavorite()
+    {
+        selectedStation = await JS.InvokeAsync<string>("getSelectValue", "station-select");
+        selectedLine = await JS.InvokeAsync<string>("getSelectValue", "line-select");
+        selectedDirection = await JS.InvokeAsync<string>("getSelectValue", "direction-select");
+        if (String.IsNullOrWhiteSpace(selectedLine) || String.IsNullOrWhiteSpace(selectedStation) || String.IsNullOrWhiteSpace(selectedDirection))
+        {
+            return;
+        }
+
+        FavoritesService.AddFavorite(selectedStation, selectedLine, selectedDirection);
+        NavManager.NavigateTo("/favorites");
+    }
+
+}

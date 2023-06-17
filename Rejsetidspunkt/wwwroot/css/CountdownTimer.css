@@ -1,0 +1,38 @@
+﻿.timer-wrap {
+    position: absolute;
+    height: fit-content;
+    width: fit-content;
+    transform: translate(-50%, -50%);
+    top: 50%;
+    left: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress {
+    height: fit-content;
+    width: fit-content;
+
+    background-color: transparent;
+}
+
+.circle-progress {
+    width: 55vw;
+    height: auto;
+}
+
+.circle-progress-value {
+    stroke: red;
+}
+
+.circle-progress-circle {
+    stroke: blue;
+    fill: white;
+}
+
+.circle-progress-text {
+    font-family: 'Arial';
+    font-weight: bolder;
+    fill: black;
+}

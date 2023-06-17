@@ -1,0 +1,110 @@
+﻿.TopBackground {
+    background: rgb(65,180,255);
+    background: linear-gradient(180deg, rgba(65,180,255,1) 0%, rgba(92,190,255,1) 35%, rgba(220,241,255,1) 100%);
+    width: 100%;
+    height: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#map-container {
+    height: 90%;
+    width: 90%;
+}
+
+#map {
+    height: 100%;
+    width: 100%;
+    border-radius: 15px;
+}
+
+.BottomBackground {
+    height: 50%;
+    width: 100%;
+    background-color: white;
+
+    display: flex;
+
+    justify-content: center;
+}
+
+#departure-info {
+    width: fit-content;
+    height: fit-content;
+}
+
+#train-info-container {
+    height: fit-content;
+    width: fit-content;
+    display: flex;
+}
+
+#train-info {
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
+#train-info h1 {
+    margin: 0;
+}
+
+#train-info img {
+    height: 75px;
+    margin-right: 2%;
+}
+
+
+#station-info {
+    width: 100%;
+    height: fit-content;
+}
+
+#station-info p {
+    margin: 0;
+    padding: 0;
+}
+
+#distance-info {
+    height: 100%;
+    width: 100%;
+
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+}
+
+#distance-timing {
+    height: fit-content;
+    width: fit-content;
+}
+
+.distance-calculations {
+    height: 85%;
+    width: 100%;
+
+    display: flex;
+
+    gap: 10px;
+
+    margin: 0;
+    padding: 0;
+}
+
+.distance-calculations p {
+    margin: 0;
+    padding: 0;
+}
+
+.MainBody {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.background {
+    height: 100%;
+    width: 100%;
+}

@@ -1,0 +1,203 @@
+﻿@page "/main/{id?}"
+@using Rejsetidspunkt.Models;
+@using Rejsetidspunkt.Services;
+@using Rejsetidspunkt.Services.ProfileServices;
+@inject IJSRuntime JS
+
+<div class="MainBody">
+    <div class="background">
+        <div class="TopBackground">
+            <div id="map-container">
+                <div id="map"></div>
+            </div>
+        </div>
+        <div class="BottomBackground">
+            <div id="distance-info">
+                <div id="departure-info">
+                    <div id="train-info-container">
+                        <div id="train-info">
+                            <img id="departure-image" src="@imageSource">
+                            <h1 id="info-departuredirection">@departureDirection</h1>
+                        </div>
+                    </div>
+                    <div id="station-info">
+                        <p id="info-departurestation">@departureStation</p>
+                        <p id="info-departuretime">@departureTime</p>
+                    </div>
+                </div>
+                <div id="distance-timing">
+                    <div class="distance-calculations">
+                        <p id="walk-time">@walkingTime</p>
+                        <span class="material-symbols-outlined">
+                            footprint
+                        </span>
+                    </div>
+                    <div class="distance-calculations">
+                        <p id="cycle-time">@cycleTime</p>
+                        <span class="material-symbols-outlined">
+                            directions_bike
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="timer-wrap">
+    <div class="progress"></div>
+</div>
+
+
+
+
+@code {
+    [Parameter]
+    public string id { get; set; }
+
+    private double totalSeconds;
+
+    private string departureDirection;
+    private string imageSource;
+
+    private string departureStation;
+    private string departureTime;
+
+    private string walkingTime;
+    private string cycleTime;
+
+    CountdownService countdown;
+
+    private DepartureWrapper departure;
+    private StopLocation CurrentStation;
+
+    STrainStationService stationService;
+    private GeoLocationService locationService;
+
+    private DateTime currentTrainDeparture = DateTime.Now;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        stationService = STrainStationService.Load();
+        locationService = new GeoLocationService();
+
+        await locationService.AskForPermissions();
+
+        await GetNextTrain();
+
+        FillUIInfo();
+
+        await JS.InvokeVoidAsync("AddProgressbar");
+
+        var destinationY = (double)CurrentStation.YLocation / 1000000.0;
+        var destinationX = (double)CurrentStation.XLocation / 1000000.0;
+
+        await JS.InvokeVoidAsync("initMap", destinationY, destinationX, CurrentStation.Name);
+
+        await StartNewCountdown();
+    }
+
+    private TimeSpan GetTimeSpan(DateTime target, DateTime currentTime)
+    {
+        return (target - currentTime);
+    }
+
+    public async Task OnSecondTick(TimeSpan timeLeft)
+    {
+
+        if ((int)Math.Round(timeLeft.TotalSeconds) % 2 == 0)
+        {
+            var destinationX = (double)CurrentStation.YLocation / 1000000.0;
+            var destinationY = (double)CurrentStation.XLocation / 1000000.0;
+
+            UpdateDistanceTiming(destinationX, destinationY);
+        }
+
+        double value = (timeLeft.TotalSeconds / totalSeconds) * 100;
+
+        string progressText = timeLeft.ToString(@"mm\:ss");
+
+        await JS.InvokeVoidAsync("updateProgress", value, progressText);
+    }
+
+    private async Task GetNextTrain()
+    {
+        var favorite = await FavoritesService.GetSingleFavoriteById(Int32.Parse(id));
+
+        var station = favorite.StationName;
+
+        departure = await new RejseplanenTimetableService().GetFirstDepartureForTrain(stationService.Stations.First(x => x.Name == station).Id, favorite.Line, favorite.Direction);
+
+        var location = await new RejseplanenLocationService().GetLocationById(favorite.StationId);
+        CurrentStation = location.StopLocations[0];
+
+        var destinationX = (double)CurrentStation.YLocation / 1000000.0;
+        var destinationY = (double)CurrentStation.XLocation / 1000000.0;
+
+        await UpdateDistanceTiming(destinationX, destinationY);
+    }
+
+    private async Task UpdateDistanceTiming(double destinationX, double destinationY)
+    {
+        var currentLocation = await locationService.GetCurrentUserLocation();
+        var currentLocationX = currentLocation.Latitude;
+        var currentLocationY = currentLocation.Longitude;
+
+        var walkTimeSeconds = await DistanceTimingService.CalculateWalkTime(destinationX, currentLocationX, destinationY, currentLocationY);
+        var cycleTimeSeconds = await DistanceTimingService.CalculateCycleTime(destinationX, currentLocationX, destinationY, currentLocationY);
+
+        walkingTime = String.Format("{0}:{1}", ((walkTimeSeconds.Hours * 60) + walkTimeSeconds.Minutes).ToString("D2"), walkTimeSeconds.Seconds.ToString("D2"));
+        cycleTime = String.Format("{0}:{1}", ((cycleTimeSeconds.Hours * 60) + cycleTimeSeconds.Minutes).ToString("D2"), cycleTimeSeconds.Seconds.ToString("D2"));
+        await JS.InvokeVoidAsync("updateTimingText", walkingTime, cycleTime);
+    }
+
+    private async Task StartNewCountdown()
+    {
+        await GetNextTrain();
+
+        if (currentTrainDeparture != departure.DateTime)
+        {
+            currentTrainDeparture = departure.DateTime;
+            CountdownService.Dispose();
+        }
+
+        FillUIInfo();
+
+        DateTime target = departure.DateTime;
+        DateTime currentTime = DateTime.Now;
+
+        totalSeconds = GetTimeSpan(target, currentTime).TotalSeconds;
+
+        countdown = CountdownService.Instance;
+
+        if (!countdown.IsRunning)
+        {
+            countdown.OnSecondTickAsync += OnSecondTick;
+            countdown.OnCountdownFinishedAsync += OnCountdownFinished;
+            countdown.Start(TimeSpan.FromSeconds(totalSeconds));
+        }
+
+    }
+
+    private void FillUIInfo()
+    {
+        departureDirection = departure.FinalStop;
+        imageSource = GetImageSource();
+
+        departureStation = stationService.Stations.First(x => x.Id == departure.StationId).Name;
+        departureTime = departure.DateTime.ToString("HH:mm");
+
+        JS.InvokeVoidAsync("fillUIInfo", departureDirection, imageSource, departureStation, departureTime);
+    }
+
+    private string GetImageSource()
+    {
+        return "images/" + departure.Line.ToLower() + "_train.png";
+    }
+
+    public async Task OnCountdownFinished()
+    {
+        countdown.OnSecondTickAsync -= OnSecondTick;
+        countdown.OnCountdownFinishedAsync -= OnCountdownFinished;
+        await StartNewCountdown();
+    }
+}

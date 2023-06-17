@@ -1,0 +1,52 @@
+﻿@page "/profile"
+@using Rejsetidspunkt.Models.ProfileModels;
+@using Rejsetidspunkt.Services.ProfileServices;
+
+@inject IJSRuntime JS
+@inject NavigationManager NavManager
+
+<div class="profile-content-list">
+    <div class="list-item" @onclick=SettingsClick>
+        <span class="material-symbols-outlined">
+            @icon
+        </span>
+        <p>@iconText</p>
+        <div class="list-item-arrow-container">
+            <span class="material-symbols-outlined">
+                arrow_forward_ios
+            </span>
+        </div>
+    </div>
+    <div id="profile-info">
+        <p id="profile-name">@profileName</p>
+        <p id="profile-email">@profileEmail</p>
+    </div>
+</div>
+
+@code {
+
+    string profileName;
+    string profileEmail;
+
+    string icon = "login";
+    string iconText = "Log in";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (await LoginService.CheckLogin())
+        {
+            icon = "logout";
+            iconText = "Log out";
+
+            UserResponse response = await LoginService.GetLoggedInAcount();
+
+            profileName = response.username;
+            profileEmail = response.email;
+        }
+    }
+
+    private async Task SettingsClick()
+    {
+        NavManager.NavigateTo("/profilesettings/" + icon);
+    }
+}

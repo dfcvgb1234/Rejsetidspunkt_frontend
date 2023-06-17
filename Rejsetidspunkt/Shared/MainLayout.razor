@@ -1,0 +1,42 @@
+﻿@using Rejsetidspunkt.Services;
+@inherits LayoutComponentBase
+
+@inject NavigationManager NavManager
+@inject IJSRuntime JS
+
+<div class="page">
+	<div class="content">
+		@Body
+	</div>
+	<NavTabBar/>
+</div>
+
+@code {
+	protected override void OnInitialized()
+	{
+		string accessKey = LocalStorageService.GetStringFromStorage("AccessKey");
+		string lastAccessedId = LocalStorageService.GetStringFromStorage("LastAccessedId");
+
+		if (String.IsNullOrWhiteSpace(accessKey))
+		{
+			JS.InvokeVoidAsync("changeEnabledButton", "profilelink");
+			NavManager.NavigateTo("/profile");
+			return;
+		}
+
+		if (String.IsNullOrWhiteSpace(lastAccessedId))
+		{
+			JS.InvokeVoidAsync("changeEnabledButton", "favoritelink");
+			NavManager.NavigateTo("/favorites");
+		}
+		else
+		{
+			JS.InvokeVoidAsync("changeEnabledButton", "mainlink");
+			NavManager.NavigateTo("/main/" + lastAccessedId);
+		}
+
+		
+
+
+	}
+}

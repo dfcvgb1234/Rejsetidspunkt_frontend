@@ -1,0 +1,47 @@
+﻿@using Rejsetidspunkt.Services;
+@inherits ComponentBase
+
+@inject NavigationManager NavManager
+@inject IJSRuntime JS
+
+<div class="tab-bar">
+	<div id="mainlink" class="tab-icon enabled" @onclick='(() => Redirect("/main/", "mainlink"))'>
+		<span class="material-symbols-outlined">
+			schedule
+		</span>
+		<p>Schedule</p>
+	</div>
+	<div id="favoritelink" class="tab-icon" @onclick='(() => Redirect("/favorites", "favoritelink"))'>
+		<span class="material-symbols-outlined">
+			Favorite
+		</span>
+		<p>Favorites</p>
+	</div>
+	<div id="profilelink" class="tab-icon" @onclick='(() => Redirect("/profile", "profilelink"))'>
+		<span class="material-symbols-outlined">
+			Person
+		</span>
+		<p>Profile</p>
+	</div>
+</div>
+@code {
+	public bool Redirect(string path, string id)
+	{
+		string lastAccessedId = LocalStorageService.GetStringFromStorage("LastAccessedId");
+
+		if (!String.IsNullOrWhiteSpace(lastAccessedId) && id == "mainlink")
+		{
+			path += lastAccessedId;
+		}
+		else if (String.IsNullOrWhiteSpace(lastAccessedId) && id == "mainlink") {
+			path = "/favorites";
+			id = "favoritelink";
+		}
+
+		JS.InvokeVoidAsync("changeEnabledButton", id);
+
+		Console.WriteLine(NavManager.Uri + " -> " + path);
+		NavManager.NavigateTo(path);
+		return true;
+	}
+}

@@ -1,0 +1,30 @@
+﻿.favorite-add {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid black;
+    height: 60px;
+    width: 60px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    bottom: 75px;
+    right: 5px;
+    background-color: #41b4ff;
+}
+
+.favorite-add p {
+    margin: 0;
+    color: white;
+    font-size: 3em;
+    font-weight: bolder;
+}
+
+.stationname-container {
+    border-left: 1px solid black;
+    padding-left: 5px;
+    width: 100%;
+}
+
+.stationname-container p {
+    width: 100%;
+}

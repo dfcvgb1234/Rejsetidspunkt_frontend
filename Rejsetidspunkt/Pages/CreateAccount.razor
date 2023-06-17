@@ -1,0 +1,36 @@
+﻿@page "/profilecreate"
+
+@using Rejsetidspunkt.Models.ProfileModels;
+@using Rejsetidspunkt.Services.ProfileServices;
+
+@inject NavigationManager NavManager
+
+<div class="login-content">
+    <label>Email</label>
+    <input @bind-value="email" type="email"/>
+    <label>Username</label>
+    <input @bind-value="username" />
+    <label>Password</label>
+    <input @bind-value="password" type="password"/>
+    <button @onclick="Create" id="login-button">Create account</button>
+    <button @onclick="GoBack" id="login-button">Go back</button>
+</div>
+
+@code {
+    string email;
+    string username;
+    string password;
+
+    private async Task Create()
+    {
+        await ProfileService.CreateAccount(email, username, password);
+        await LoginService.Login(username, password);
+
+        NavManager.NavigateTo("/profile");
+    }
+
+    private void GoBack()
+    {
+        NavManager.NavigateTo("/profilesettings/login");
+    }
+}

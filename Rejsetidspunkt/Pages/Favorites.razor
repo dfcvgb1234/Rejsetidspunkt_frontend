@@ -1,0 +1,48 @@
+﻿@page "/favorites"
+@using Rejsetidspunkt.Models.ProfileModels;
+@using Rejsetidspunkt.Services.ProfileServices;
+@using Rejsetidspunkt.Services;
+
+@inject NavigationManager NavManager
+
+<div class="profile-content-list">
+    @foreach (FavoriteModel model in favorites)
+    {
+        <div class="list-item" @onclick='(() => EnterFavorite(model.Id))'>
+            <img src="@model.LineImageSource"/>
+            <p>@model.Direction</p>
+            <div class="stationname-container">
+                <p>@model.StationName</p>
+            </div>
+            <div class="list-item-arrow-container">
+                <span class="material-symbols-outlined">
+                    arrow_forward_ios
+                </span>
+            </div>
+        </div>
+    }
+</div>
+<div class="favorite-add" @onclick=AddFavorite>
+    <p>+</p>
+</div>
+
+@code {
+
+    List<FavoriteModel> favorites = new List<FavoriteModel>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        favorites = await FavoritesService.GetAllFavorites();
+    }
+
+    private void EnterFavorite(int id)
+    {
+        LocalStorageService.SaveStringToStorage("LastAccessedId", id.ToString());
+        NavManager.NavigateTo("/main/" + id);
+    }
+
+    private void AddFavorite()
+    {
+        NavManager.NavigateTo("/addfavorite");
+    }
+}
